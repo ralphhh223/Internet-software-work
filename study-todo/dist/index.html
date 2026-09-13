@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>一页清单 · 学习待办</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232e6555'/%3E%3Cpath d='m16 33 10 10 23-24' fill='none' stroke='white' stroke-width='6'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header><span class="brand">✓ 一页清单</span><span class="tag">学习 · 生活 · 小目标</span></header>
+  <section class="intro"><p class="eyebrow">MAKE ROOM FOR FOCUS</p><h1>把计划写下来，<br>把今天过踏实。</h1><p>从一件小事开始，慢慢完成你的清单。</p></section>
+  <section class="card" aria-label="学习任务">
+    <div class="card-title"><h2>我的待办</h2><span id="count" aria-live="polite"></span></div>
+    <form id="form"><label class="sr-only" for="task">新任务</label><input id="task" maxlength="100" placeholder="下一件想完成的事……" autocomplete="off" required><button class="add" type="submit">＋ 添加</button></form>
+    <div class="progress-row"><label for="progress">完成进度</label><span id="progress-text">0 / 0</span></div>
+    <progress id="progress" max="1" value="0"></progress>
+    <nav class="filters" aria-label="任务筛选"><button type="button" data-filter="all" aria-pressed="true">全部</button><button type="button" data-filter="active" aria-pressed="false">待完成</button><button type="button" data-filter="done" aria-pressed="false">已完成</button></nav>
+    <ul id="list"></ul><p id="empty">清单还是空的，写下今天的第一件事吧。</p>
+    <p id="notice" role="status"></p>
+  </section>
+  <footer>只保存在当前浏览器 · 不需要登录</footer>
+</main><script src="app.js"></script>
+</body></html>
