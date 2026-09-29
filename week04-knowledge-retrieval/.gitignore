@@ -1,0 +1,60 @@
+# 本仓库交付「第 4 课 OpenSpec 变更描述」，并随附该变更的实现与回归测试，
+# 使规约、实现、验证三者可对照复核。
+#
+# 注意：git 无法用 ! 例外规则「捞回」被排除目录里的文件（父目录被忽略时，
+# 其下内容一律不检查），所以这里只写「要排除什么」，不写「要保留什么」。
+
+# ---------- 运行时数据 ----------
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# ---------- 环境变量（可能含密钥） ----------
+.env
+
+# ---------- 本地开发与部署脚手架（非本课交付内容） ----------
+Dockerfile.api
+Dockerfile.web
+docker-compose.yml
+deploy/
+start.bat
+start-bg.bat
+start-docker.bat
+stop.bat
+restart.bat
+.dockerignore
+
+# ---------- 应用的其他部分（非本课交付内容） ----------
+server.js
+app.js
+auth.js
+db.js
+teacher.js
+index.html
+styles.css
+
+# ---------- 前几课的作业文档与截图 ----------
+作业*.md
+作业*.png
+屏幕截图*.png
+[0-9]屏幕截图*.png
+班级材料页-界面参考.png
+界面-*.png
+_app_*.png
+
+# ---------- 测试产生的临时目录（保留 last-run-*.txt 存档，见下） ----------
+tests/_tmp_*/
+
+# ---------- 临时脚本与日志（约定用 _ 前缀） ----------
+_*
+*.log
+
+# ---------- 编辑器 / 系统 ----------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---------- 会话记忆（本地工具数据） ----------
+.workbuddy/

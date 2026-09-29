@@ -1,0 +1,10 @@
+# 文本文件统一按 LF 存储
+* text=auto eol=lf
+
+# 二进制资源不做行尾转换
+*.png binary
+*.jpg binary
+*.gz binary
+
+# Windows 批处理必须是 CRLF
+*.bat text eol=crlf

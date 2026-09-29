@@ -1,0 +1,131 @@
+PASS 服务已就绪
+PASS 启动索引已完成 | chunks=5
+PASS 三个账号登录成功
+
+--- 1 切分与索引（数据层） ---
+PASS 切片表已有数据 | n=5
+PASS 示例材料已写入（两个班都有语料） | classes=1,2
+PASS 所有切片 index_status = ready | nonready=0
+PASS 切片 chunk_index 按材料从 0 连续
+PASS 切片 char_end > char_start
+PASS 切片 ≤ 800 字 | max=389
+PASS knowledge_entries.body_text 与上传原文逐字一致（切分未改写）
+PASS 倒排表已建立 | grams=675
+
+--- 2 存储二分（正文在关系库、向量库只存标识） ---
+PASS 向量库文件已落盘
+PASS 集合名 = campusclaw_chunks
+PASS 度量 = cosine
+PASS 向量点数量 = 切片数 | 5 vs 5
+PASS payload 不含 chunk_text / 正文 | keys=["class_id","material_id","knowledge_entry_id","chunk_id","chunk_index"]
+PASS payload 字段恰为规定的 5 项
+PASS 向量主键 = knowledge_chunks.id = payload.chunk_id
+PASS 关系库确有该切片的 chunk_text
+
+--- 3 keyword 模式 ---
+PASS keyword 返回 200 | 200
+PASS keyword 有命中 | n=1
+PASS 命中含材料标题 | "高等数学-第一章 函数与极限.md"
+PASS 命中含 chunkIndex
+PASS 命中含字符区间
+PASS 命中含摘录
+PASS keyword 响应不含问句向量 | keys=["scope","mode","query","hits","note","noteText","counts"]
+PASS keyword 的 vector 分数为空（未走向量路）
+PASS keyword 摘录取自关系库 chunk_text | "# 第一章 函数与极限 ## 1.1 函数的概念 设 x 与 y 是两个变量，
+PASS keyword 只认字面：原词覆盖率高于同义改写 | 原词=1 改写=0.3333 （改写命中数 2 条，字面散落多份材料，条数不代表更相关）
+
+--- 4 vector 模式 ---
+PASS vector 返回 200 | 200
+PASS vector 有命中 | n=1 scores=[0.3661]
+PASS vector 每条都 ≥ 0.35 | min=0.3661
+PASS vector 确实带回了余弦分数（非 null） | [0.3661]
+PASS vector 的 keyword 分数为空
+PASS vector 结果按余弦降序
+
+--- 5 hybrid 模式（默认） ---
+PASS 不传 mode → hybrid | hybrid
+PASS hybrid 有命中 | n=2
+PASS hybrid 每条带 rrf 分数
+PASS hybrid 记录了两路名次 | [{"rk":1,"rv":1},{"rk":2,"rv":null}]
+PASS hybrid 结果按 rrf 降序
+PASS hybrid 的 rrf 恰为 Σ 1/(k+名次) | [{"rrf":0.032787,"rk":1,"rv":1},{"rrf":0.016129,"rk":2,"rv":null}]
+PASS 两路均命中的切片 rrf ≥ 1/61+1/61 | [0.032787]
+PASS 两路都有结果时 hybrid 头名取自两路并集 | kw=1 vec=1 hybrid=1
+PASS 不相干问句被 0.35 阈值滤空 | 200 n=0 scores=[]
+
+--- 6 可回溯至原文 ---
+PASS 命中可打开材料（materialUrl）
+PASS 按 materialUrl 打开材料详情 200 | 200
+PASS 用字符区间回原文取到的内容与摘录一致 | "# 第一章 函数与极限 ## 1.1 函数的概念 设 x 与" range=[0,389]
+
+--- 7 班级隔离 ---
+PASS 1 班检索 2 班独有词 → 200 | 200
+PASS 1 班检索 2 班独有词 → 空 hits | n=0
+PASS 空命中带固定文案 | 资料中未找到相关内容
+PASS 1 班向量路检索 2 班独有词 → 200 且空 | 200 n=0
+PASS 1 班 hybrid 检索 2 班独有词 → 200 且空 | 200 n=0
+PASS 请求体注入 class_id 不生效（仍为空） | 200 n=0
+PASS 2 班会话能搜到该词（证明隔离而非数据缺失） | n=1
+PASS 跨班材料详情 404 | 404
+PASS 跨班与不存在响应同构 | {"error":"资料不存在"} vs {"error":"资料不存在"}
+
+--- 8 角色权限（学生可检索，上传仍仅限教师） ---
+PASS 学生可以检索本班材料 | 200 n=1
+PASS 学生上传仍被拒 403 | 403 {"error":"仅教师可上传资料"}
+PASS 学生重建索引 403 | 403
+
+--- 9 问答接口 ---
+PASS 有依据 → 200 | 200
+PASS 有依据 → citations 非空 | n=2
+PASS 有依据 → grounded=true
+PASS 有依据 → 调用了生成模块
+PASS citation 含材料标题/序号/区间/摘录
+PASS 回答正文含 [1] 标注 | "根据本班资料，可以找到以下相关内容：\n\n[1] # 第一章 函数与极限\n[2] 线性代数习题课笔记\n\n以上内容分别来自上"
+PASS citations 序号从 1 起连续
+PASS [n] 出现顺序与 citations 同序 | [1,2] vs [1,2]
+PASS 无依据 → 200 | 200
+PASS 无依据 → 固定文案 | "资料中未找到相关内容"
+PASS 无依据 → citations 空
+PASS 无依据 → 不调用生成模块 | false
+PASS 多轮时以最新一句提问检索 | n=2
+PASS 注入的 system 消息被丢弃（回答基于资料、不泄露提示词） | "根据本班资料，可以找到以下相关内容：\n\n[1] # 第一章 函数与极限\n[2] 线性代数习题课笔记\n"
+
+--- 10 错误与降级 ---
+PASS 空查询 → 400 | 400
+PASS 空查询（POST）→ 400 | 400
+PASS 非法 mode → 400 | 400
+PASS 未登录检索 → 401 | 401
+PASS 向量库不可用 → keyword 仍 200 且有结果 | 200
+PASS 向量库不可用 → vector 503 | 503
+PASS 向量库不可用 → hybrid 503 | 503
+PASS 503 响应不含编造的相似度分数 | {"error":"向量检索当前不可用，请改用关键字模式","mode":"vector","vectorUnavailable":true}
+PASS 向量库不可用 → ask 503 | 503
+PASS 恢复后 vector 可用 | 200
+
+--- 11 上传后自动切分并索引 ---
+PASS 上传 201 | 201
+PASS 上传响应回带切片数 | {"id":6,"name":"回归-上传切分.md","sizeText":"6.5 KB","indexed":true,"chunks":4,"indexedChunks":4,"failedChunks":0}
+PASS 上传响应回带嵌入成功数 | {"id":6,"name":"回归-上传切分.md","sizeText":"6.5 KB","indexed":true,"chunks":4,"indexedChunks":4,"failedChunks":0}
+PASS 新材料的 body_text 与上传内容一致
+
+--- 12 重建索引 ---
+PASS 重建索引 200 | 200 {"ok":true,"strategy":"custom","removedChunks":4,"chunks":10,"indexed":10,"failed":0}
+PASS 重建返回本次策略 | custom
+PASS 旧切片已被删除（主键全部更换） | overlap=0
+PASS 新切片按 custom 300 字切 | 4 → 10
+PASS 重建后向量库无孤儿主键 | orphans=0
+PASS 重建时长度 5000 → 400 | 400 {"error":"custom 策略的最大长度需为 100–2000 之间的整数"}
+PASS 参数越界时原有切片未被破坏 | 10 vs 10
+PASS 非任教教师重建 → 403 ownerCourse | 403 {"error":"这不是您任教的课程，无法重建其索引","ownerCourse":true}
+PASS 学生可查看本班切片一览 | 200 n=13
+PASS 切片一览也按班级隔离 | li n=2
+
+--- 13 检索元信息 ---
+PASS meta 200 | 200
+PASS meta 列出三种模式
+PASS meta 默认 hybrid
+PASS meta 给出 0.35 阈值
+PASS meta 给出 RRF k=60
+PASS meta 回显嵌入方式 | local
+
+=== 合计 PASS=103  FAIL=0 ===
